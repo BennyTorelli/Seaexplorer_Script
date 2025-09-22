@@ -1,0 +1,68 @@
+MERGE MISSION DATA - CSV
+========================================
+
+Data merge: 22/09/2025 19:36:07
+File processati: 1/1
+Righe totali: 1,826,638
+Colonne totali: 49
+Range file numbers: 193424 → 193424
+Ordinamento: Numerico corretto
+
+FILE GENERATI:
+- Dataset completo: mission_complete_merged_20250922_193543.csv
+- Campione: mission_complete_merged_SAMPLE_20250922_193543.csv
+- Metadati: mission_merge_metadata_20250922_193543.txt
+
+COLONNE NEL DATASET:
+ 1. PLD_REALTIMECLOCK         : 1,826,638 valori (100.0%)
+ 2. NAV_RESOURCE              :   91,950 valori (  5.0%)
+ 3. NAV_LONGITUDE             :   91,950 valori (  5.0%)
+ 4. NAV_LATITUDE              :   91,950 valori (  5.0%)
+ 5. NAV_DEPTH                 :   91,950 valori (  5.0%)
+ 6. NAV_HEADING               :   91,873 valori (  5.0%)
+ 7. SD_CARD_USAGE             : 1,769,297 valori ( 96.9%)
+ 8. SSD_USAGE                 : 1,826,499 valori (100.0%)
+ 9. ACQUISITION_FREQ          : 1,826,478 valori (100.0%)
+10. RECORDING                 :  469,492 valori ( 25.7%)
+11. LEGATO_CONDUCTIVITY       : 1,826,537 valori (100.0%)
+12. LEGATO_TEMPERATURE        : 1,826,537 valori (100.0%)
+13. LEGATO_PRESSURE           : 1,826,537 valori (100.0%)
+14. LEGATO_SALINITY           : 1,826,537 valori (100.0%)
+15. LEGATO_CONDTEMP           : 1,826,537 valori (100.0%)
+16. LEGATO_CODA_DO            : 1,826,537 valori (100.0%)
+17. LEGATO_CODA_TEMPERATURE   : 1,826,537 valori (100.0%)
+18. LEGATO_CODA_CORR_PHASE    : 1,826,537 valori (100.0%)
+19. LEGATO_SOUND_VELOCITY     : 1,826,537 valori (100.0%)
+20. FLBBCD_CHL_COUNT          : 1,625,467 valori ( 89.0%)
+21. FLBBCD_CHL_SCALED         : 1,625,467 valori ( 89.0%)
+22. FLBBCD_CDOM_COUNT         : 1,625,467 valori ( 89.0%)
+23. FLBBCD_CDOM_SCALED        : 1,625,467 valori ( 89.0%)
+24. FLBBCD_BB_700_COUNT       : 1,625,467 valori ( 89.0%)
+25. FLBBCD_BB_700_SCALED      : 1,625,467 valori ( 89.0%)
+26. User_Field1               : 1,692,773 valori ( 92.7%)
+27. User_Field2               :        0 valori (  0.0%)
+28. User_Field3               :        0 valori (  0.0%)
+29. User_Field4               :        0 valori (  0.0%)
+30. User_Field5               :        0 valori (  0.0%)
+31. User_Field6               :        0 valori (  0.0%)
+32. User_Field7               :        0 valori (  0.0%)
+33. User_Field8               :        0 valori (  0.0%)
+34. User_Field9               :        0 valori (  0.0%)
+35. User_Field10              :        0 valori (  0.0%)
+36. BS_HEADING                :        0 valori (  0.0%)
+37. BS_ZB                     :        0 valori (  0.0%)
+38. BS_ZT                     :        0 valori (  0.0%)
+39. BS_PU                     :        0 valori (  0.0%)
+40. BS_PD                     :        0 valori (  0.0%)
+41. BS_BU                     :        0 valori (  0.0%)
+42. BS_BD                     :        0 valori (  0.0%)
+43. BS_SR                     :        0 valori (  0.0%)
+44. BS_ALTIMETER.ENABLE       :        0 valori (  0.0%)
+45. BS_ALTIMETER.VALUE        :        0 valori (  0.0%)
+46. BS_CURRENT.CORRECTION.ENABLE :        0 valori (  0.0%)
+47. source_file               : 1,826,638 valori (100.0%)
+48. file_number               : 1,826,638 valori (100.0%)
+49. merge_position            : 1,826,638 valori (100.0%)
+
+FILE SORGENTE PROCESSATI:
+  1. mission_raw_to_csv_20250922_193424.csv (#193424)

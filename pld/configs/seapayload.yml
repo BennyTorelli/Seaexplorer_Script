@@ -1,0 +1,39 @@
+Amount_userfield: 10
+
+Audio:
+  Channels: 4
+  Rate: 192000
+  Format: 24
+  MaxFileTime: 30
+  
+Legato:
+  CodaInstalled: True
+  WarmupPeriod: 60
+  Frequency: 1
+  Baud: 115200
+  Port: J5
+
+FLBBCD:
+  WarmupPeriod: 10
+  Baud: 19200
+  Frequency: 1
+  Port: J6
+  CHL:
+    DarkCounts: 52
+    ScaleFactor: 0.0121
+    MaxOutput: 4130
+  CDOM:
+    DarkCounts: 51
+    ScaleFactor: 0.0909
+    MaxOutput: 4130
+  SIG:
+    DarkCounts: 50
+    ScaleFactor: 3.062E-06
+    MaxOutput: 4130
+
+#UserPayload1:
+  #Port: J4
+  #Baud: 115200
+  #Separator: ','
+
+Backseat: True
