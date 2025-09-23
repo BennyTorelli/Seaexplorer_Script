@@ -1,26 +1,26 @@
 #!/usr/bin/env python3
 """
 MERGE MISSION DATA - CSV VERSION
-Unisce più file CSV di missione del glider SeaExplorer in un unico dataset completo
-Ordinamento numerico corretto e gestione memoria ottimizzata
+Merges separate CSV files (mission_001.csv, mission_002.csv, etc.) 
+into a single complete mission dataset in proper numerical order
 """
 
 import pandas as pd
-import glob
-import os
-import re
-from datetime import datetime
 import numpy as np
+from datetime import datetime
+import os
+import glob
+import re
 
 def extract_file_number(filename):
     """
-    Estrae il numero dal filename per ordinamento numerico corretto
-    Supporta vari formati: mission_001.csv, sea074.67.xxx.csv, etc.
+    Extracts number from filename for correct numerical sorting
+    Supports various formats: mission_001.csv, sea074.67.xxx.csv, etc.
     """
-    # Pattern per diversi formati (in ordine di priorità)
+    # Pattern for different formats (in priority order)
     patterns = [
         r'mission_(\d+)\.csv$',  # mission_001.csv, mission_123.csv
-        r'_(\d+)\.csv$',         # qualsiasi_123.csv
+        r'_(\d+)\.csv$',         # anything_123.csv
         r'\.(\d+)\.csv$',        # sea074.67.123.csv
         r'(\d+)\.csv$',          # 123.csv
         r'\.sub\.(\d+)',         # .sub.123.
@@ -36,23 +36,23 @@ def extract_file_number(filename):
 
 def analyze_csv_files(file_paths):
     """
-    Analizza i file CSV per verificare compatibilità e struttura
+    Analyzes CSV files to verify compatibility and structure
     """
-    print(f"\n🔍 ANALISI FILE CSV...")
+    print(f"\n🔍 CSV FILE ANALYSIS...")
     
-    sample_files = file_paths[:3]  # Analizza primi 3 file
+    sample_files = file_paths[:3]  # Analyze first 3 files
     columns_info = {}
     
     for file_path in sample_files:
         try:
-            # Leggi solo header per analisi veloce
+            # Read only header for fast analysis
             df_sample = pd.read_csv(file_path, nrows=5)
             file_num = extract_file_number(file_path)
             
             print(f"   📄 {os.path.basename(file_path)} (#{file_num})")
-            print(f"      Colonne: {len(df_sample.columns)}")
+            print(f"      Columns: {len(df_sample.columns)}")
             
-            # Salva info colonne del primo file come riferimento
+            # Save column info from first file as reference
             if not columns_info:
                 columns_info = {
                     'reference_file': file_path,
@@ -60,318 +60,272 @@ def analyze_csv_files(file_paths):
                     'count': len(df_sample.columns)
                 }
             else:
-                # Verifica compatibilità
+                # Verify compatibility
                 if set(df_sample.columns) != set(columns_info['columns']):
-                    print(f"      ⚠️ Colonne diverse dal file di riferimento")
+                    print(f"      ⚠️ Different columns from reference file")
                 else:
-                    print(f"      ✅ Colonne compatibili")
+                    print(f"      ✅ Compatible columns")
                     
         except Exception as e:
-            print(f"      ❌ Errore lettura: {e}")
+            print(f"      ❌ Read error: {e}")
     
     return columns_info
 
 def merge_csv_files():
     """
-    Unisce più file CSV in un unico dataset di missione
+    Merges multiple CSV files into a single mission dataset
     """
     
     print("🚀 MERGE MISSION DATA - CSV VERSION")
     print("=" * 60)
-    print("Unisce più file CSV del glider in un unico dataset completo")
+    print("Merges multiple glider CSV files into a single complete dataset")
     print("=" * 60)
     
-    # Pattern per trovare i file CSV di missione
+    # Patterns to find mission CSV files
     patterns = [
-        "csv_separati/mission_*.csv",  # File mission separati (PRIORITÀ)
-        "csv_separati/*.csv",          # Tutti i CSV nella cartella separati
-        "mission_*.csv",               # File mission specifici
-        "*.csv",                       # Tutti i CSV nella directory corrente
-        "sea074*.csv",                 # File SeaExplorer specifici
-        "netcdf_output/*.csv",         # CSV nella cartella output
-        "pld/logs/*.csv"               # CSV nella cartella pld/logs
+        "csv_separati/mission_*.csv",  # Separate mission files (PRIORITY)
+        "csv_separati/*.csv",          # All CSVs in separate folder
+        "mission_*.csv",               # Specific mission files
+        "*.csv",                       # All CSVs in current directory
+        "sea074*.csv",                 # Specific SeaExplorer files
+        "netcdf_output/*.csv",         # CSVs in output folder
+        "pld/logs/*.csv"               # CSVs in pld/logs folder
     ]
     
-    print(f"\n🔍 RICERCA FILE CSV...")
+    print(f"\n🔍 SEARCHING CSV FILES...")
     all_files = []
     
     for pattern in patterns:
         files = glob.glob(pattern)
+        all_files.extend(files)
         if files:
-            print(f"   Pattern '{pattern}': {len(files)} file")
-            all_files.extend(files)
+            print(f"   📂 {pattern}: {len(files)} files")
     
-    # Rimuovi duplicati e ordina
-    file_paths = list(set(all_files))
+    if not all_files:
+        print(f"❌ No CSV files found!")
+        print(f"💡 Searched patterns: {patterns}")
+        return
     
-    if not file_paths:
-        print(f"❌ Nessun file CSV trovato!")
-        print(f"💡 Patterns cercati: {patterns}")
-        print(f"💡 Directory corrente: {os.getcwd()}")
-        return None
+    print(f"📋 Total files found: {len(all_files)}")
     
-    # Filtra file validi (esclude file già mergiati, sample, etc.)
+    # Filter files by size and content
+    print(f"\n🔧 FILTERING FILES...")
+    
     valid_files = []
-    excluded_keywords = ['merged', 'complete', 'sample', 'metadata', 'units_converted', 'backup']
+    skipped_files = {
+        'too_small': [],
+        'already_processed': [],
+        'read_error': []
+    }
     
-    for file_path in file_paths:
-        filename = os.path.basename(file_path).lower()
-        
-        # Salta file che contengono parole chiave di esclusione
-        if any(keyword in filename for keyword in excluded_keywords):
-            print(f"   ⏭️ Escluso: {os.path.basename(file_path)} (già processato)")
+    for file_path in all_files:
+        # Skip already processed files
+        skip_keywords = ['merged', 'backup', 'sample', 'metadata', 'units_converted', 'renamed', 'LATEST', 'latest', 'convert_all_units']
+        if any(keyword in file_path.lower() for keyword in skip_keywords):
+            skipped_files['already_processed'].append(file_path)
             continue
         
-        file_size = os.path.getsize(file_path) / (1024 * 1024)  # MB
+        # Check file size
+        try:
+            file_size_mb = os.path.getsize(file_path) / (1024 * 1024)
+            if file_size_mb < 0.001:  # < 1KB
+                skipped_files['too_small'].append(file_path)
+                continue
+        except:
+            skipped_files['read_error'].append(file_path)
+            continue
         
-        # Salta file troppo grandi (probabilmente già uniti) o troppo piccoli
-        if 0.01 <= file_size <= 100:  # Tra 0.01MB e 100MB (adattato per file separati)
-            valid_files.append(file_path)
-        else:
-            print(f"   ⏭️ Saltato {os.path.basename(file_path)} ({file_size:.1f} MB)")
+        valid_files.append(file_path)
     
-    file_paths = valid_files
+    print(f"   ✅ Valid files: {len(valid_files)}")
+    print(f"   ⚠️ Skipped files: {sum(len(v) for v in skipped_files.values())}")
+    for category, files in skipped_files.items():
+        if files:
+            print(f"      - {category.replace('_', ' ').title()}: {len(files)}")
     
-    if not file_paths:
-        print(f"❌ Nessun file CSV valido trovato dopo il filtro!")
-        return None
+    if not valid_files:
+        print(f"❌ No valid CSV files found!")
+        return
     
-    print(f"✅ Trovati {len(file_paths)} file CSV validi")
-    
-    # ORDINAMENTO NUMERICO CORRETTO
-    print(f"\n📋 ORDINAMENTO FILE...")
+    # CORRECT NUMERICAL SORTING
+    print(f"\n📋 FILE SORTING...")
+    file_paths = valid_files  # Rename for consistency
     file_paths.sort(key=extract_file_number)
     
-    # Mostra ordine
+    # Show order
     file_numbers = [extract_file_number(f) for f in file_paths]
-    print(f"   Primo file: {os.path.basename(file_paths[0])} (#{file_numbers[0]})")
-    print(f"   Ultimo file: {os.path.basename(file_paths[-1])} (#{file_numbers[-1]})")
-    print(f"   Range numeri: {min(file_numbers)} → {max(file_numbers)}")
+    print(f"   First file: {os.path.basename(file_paths[0])} (#{file_numbers[0]})")
+    print(f"   Last file: {os.path.basename(file_paths[-1])} (#{file_numbers[-1]})")
+    print(f"   Number range: {min(file_numbers)} → {max(file_numbers)}")
     
     if len(file_paths) <= 20:
-        print(f"   Ordine completo: {file_numbers}")
+        print(f"   Complete order: {file_numbers}")
     else:
-        print(f"   Primi 10: {file_numbers[:10]}")
-        print(f"   Ultimi 10: {file_numbers[-10:]}")
+        print(f"   First 10: {file_numbers[:10]}")
+        print(f"   Last 10: {file_numbers[-10:]}")
     
-    # Verifica ordine
+    # Verify order
     if file_numbers != sorted(file_numbers):
-        print("⚠️ ATTENZIONE: Ordine potrebbe non essere corretto")
+        print("⚠️ WARNING: Order might not be correct")
     else:
-        print("✅ Ordine numerico verificato")
+        print("✅ Numerical order verified")
     
-    # Analizza struttura file
+    # Analyze file structure
     columns_info = analyze_csv_files(file_paths)
     
-    # Merge dei file
-    print(f"\n🔗 MERGE FILE CSV...")
+    if not columns_info:
+        print(f"❌ Could not analyze file structure!")
+        return
+    
+    print(f"\n📊 FILE STRUCTURE:")
+    print(f"   Reference: {os.path.basename(columns_info['reference_file'])}")
+    print(f"   Columns: {columns_info['count']}")
+    
+    # DATA LOADING AND MERGING
+    print(f"\n🔄 LOADING AND MERGING CSV FILES...")
+    print("=" * 50)
     
     all_dataframes = []
     total_rows = 0
-    successful_files = 0
+    loading_errors = []
     
     for i, file_path in enumerate(file_paths, 1):
+        file_num = extract_file_number(file_path)
+        
         try:
-            file_num = extract_file_number(file_path)
-            file_size = os.path.getsize(file_path) / 1024  # KB
+            print(f"📂 File {i:3d}/{len(file_paths)}: {os.path.basename(file_path):<25} (#{file_num:3d})", end="")
             
-            print(f"\n📂 File {i}/{len(file_paths)}: {os.path.basename(file_path)}")
-            print(f"      Numero: #{file_num}, Dimensione: {file_size:.1f} KB")
+            # Load CSV with specific dtypes to preserve coordinate precision
+            # Keep coordinates as strings to avoid float conversion issues
+            coordinate_columns = {
+                'NAV_LATITUDE': str,
+                'NAV_LONGITUDE': str
+            }
             
-            # Leggi CSV
-            df = pd.read_csv(file_path)
+            df = pd.read_csv(file_path, dtype=coordinate_columns)
             
             if len(df) == 0:
-                print(f"      ⚠️ File vuoto, saltato")
+                print(" → ❌ Empty")
                 continue
             
-            # Aggiungi colonne di tracciabilità
+            # Add file metadata
             df['source_file'] = os.path.basename(file_path)
             df['file_number'] = file_num
-            df['merge_position'] = i
             
             all_dataframes.append(df)
-            successful_files += 1
             total_rows += len(df)
             
-            print(f"      ✅ Aggiunto: {len(df):,} righe (totale: {total_rows:,})")
+            print(f" → ✅ {len(df):>6,} rows")
             
-            # Progress ogni 10 file
-            if i % 10 == 0:
-                print(f"\n📊 PROGRESS: {i}/{len(file_paths)} file, {total_rows:,} righe totali")
-                
         except Exception as e:
-            print(f"      ❌ Errore: {e}")
-            continue
+            print(f" → ❌ Error: {str(e)[:30]}...")
+            loading_errors.append((file_path, str(e)))
     
     if not all_dataframes:
-        print(f"\n❌ Nessun file caricato con successo!")
-        return None
+        print(f"\n❌ No data loaded!")
+        return
     
-    print(f"\n🔗 CONCATENAZIONE FINALE...")
-    print(f"   File processati: {successful_files}/{len(file_paths)}")
-    print(f"   Righe totali: {total_rows:,}")
+    print(f"\n📊 LOADING SUMMARY:")
+    print(f"   Files loaded: {len(all_dataframes)}/{len(file_paths)}")
+    print(f"   Total rows: {total_rows:,}")
+    print(f"   Loading errors: {len(loading_errors)}")
+    
+    # MERGE DATA
+    print(f"\n🔗 MERGING DATA...")
     
     try:
-        # Concatena tutti i dataframe
         merged_df = pd.concat(all_dataframes, ignore_index=True, sort=False)
+        print(f"✅ Data merged: {len(merged_df):,} total rows")
         
-        print(f"✅ Dataset unito: {len(merged_df):,} righe × {len(merged_df.columns)} colonne")
-        
-        # Ordina per colonna temporale se presente
-        time_columns = ['time', 'timestamp', 'PLD_REALTIMECLOCK', 'TIME']
+        # Try temporal sorting if time column exists
         sort_column = None
-        
+        time_columns = ['PLD_REALTIMECLOCK', 'TIMESTAMP', 'TIME', 'DATE_TIME']
         for col in time_columns:
             if col in merged_df.columns:
                 sort_column = col
                 break
         
         if sort_column:
-            print(f"   📅 Ordinamento per colonna temporale: {sort_column}")
+            print(f"   📅 Sorting by time column: {sort_column}")
             merged_df = merged_df.sort_values(sort_column).reset_index(drop=True)
-            print(f"   ✅ Dataset ordinato temporalmente")
+        else:
+            print(f"   📋 Maintaining file order (no time column found)")
         
     except Exception as e:
-        print(f"❌ Errore concatenazione: {e}")
-        return None
+        print(f"❌ Merge error: {e}")
+        return
     
-    # Salvataggio
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    output_file = f"mission_complete_merged_{timestamp}.csv"
-    
-    print(f"\n💾 SALVATAGGIO DATASET UNITO...")
+    # SAVE MERGED DATA
+    print(f"\n💾 SAVING MERGED DATASET...")
     
     try:
-        # Salva dataset completo
+        # Create output filename with script name and timestamp
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        output_file = f"script2_mission_complete_merged_{timestamp}.csv"
+        
+        # Save to CSV
         merged_df.to_csv(output_file, index=False, encoding='utf-8')
         
-        file_size = os.path.getsize(output_file) / (1024 * 1024)  # MB
-        print(f"✅ Dataset salvato: {output_file}")
-        print(f"   Dimensione: {file_size:.1f} MB")
-        print(f"   Righe: {len(merged_df):,}")
-        print(f"   Colonne: {len(merged_df.columns)}")
+        file_size_mb = os.path.getsize(output_file) / (1024 * 1024)
+        print(f"✅ Merged dataset saved: {output_file}")
+        print(f"   Size: {file_size_mb:.1f} MB")
+        print(f"   Rows: {len(merged_df):,}")
+        print(f"   Columns: {len(merged_df.columns)}")
         
     except Exception as e:
-        print(f"❌ Errore salvataggio: {e}")
-        return None
-    
-    # CREA FILE DI ESEMPIO VISUALIZZABILE
-    print(f"\n📄 CREAZIONE FILE CSV DI ESEMPIO...")
-    
+        print(f"❌ Save error: {e}")
+        return
+
+    # SAVE METADATA
+    print(f"\n📝 SAVING METADATA...")
+
     try:
-        # Campione rappresentativo
-        sample_size = 500
-        
-        if len(merged_df) > sample_size:
-            # Prendi campioni da inizio, metà e fine
-            third = len(merged_df) // 3
-            start_sample = merged_df.head(150)
-            mid_sample = merged_df.iloc[third:third+200]
-            end_sample = merged_df.tail(150)
-            
-            sample_df = pd.concat([start_sample, mid_sample, end_sample], ignore_index=True)
-        else:
-            sample_df = merged_df.copy()
-        
-        # File di esempio
-        sample_file = f"mission_complete_merged_SAMPLE_{timestamp}.csv"
-        sample_df.to_csv(sample_file, index=False, encoding='utf-8')
-        
-        sample_size_kb = os.path.getsize(sample_file) / 1024
-        print(f"✅ CSV di esempio: {sample_file}")
-        print(f"   Righe: {len(sample_df)}")
-        print(f"   Dimensione: {sample_size_kb:.1f} KB (visualizzabile)")
-        
-        # Anteprima dati
-        print(f"\n📊 ANTEPRIMA DATASET UNITO (prime 5 righe):")
-        print("-" * 80)
-        
-        # Colonne prioritarie per anteprima
-        priority_cols = [
-            'time', 'timestamp', 'PLD_REALTIMECLOCK', 'TIME',
-            'NAV_LATITUDE', 'NAV_LONGITUDE', 'NAV_DEPTH',
-            'LEGATO_TEMPERATURE', 'LEGATO_PRESSURE', 'source_file'
-        ]
-        
-        display_cols = []
-        for col in priority_cols:
-            if col in sample_df.columns:
-                display_cols.append(col)
-                if len(display_cols) >= 6:
-                    break
-        
-        if display_cols:
-            preview_df = sample_df[display_cols].head(5)
-            print(preview_df.to_string(index=False))
-        else:
-            # Fallback: prime colonne disponibili
-            display_cols = list(sample_df.columns)[:6]
-            preview_df = sample_df[display_cols].head(5)
-            print(preview_df.to_string(index=False))
-        
-    except Exception as e:
-        print(f"⚠️ Warning esempio: {e}")
-    
-    # Metadati
-    print(f"\n📝 CREAZIONE METADATI...")
-    
-    try:
-        metadata_file = f"mission_merge_metadata_{timestamp}.txt"
+        metadata_file = f"script2_mission_merge_metadata_{timestamp}.txt"
         
         with open(metadata_file, 'w', encoding='utf-8') as f:
-            f.write("MERGE MISSION DATA - CSV\n")
-            f.write("=" * 40 + "\n\n")
-            f.write(f"Data merge: {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}\n")
-            f.write(f"File processati: {successful_files}/{len(file_paths)}\n")
-            f.write(f"Righe totali: {len(merged_df):,}\n")
-            f.write(f"Colonne totali: {len(merged_df.columns)}\n")
-            f.write(f"Range file numbers: {min(file_numbers)} → {max(file_numbers)}\n")
-            f.write(f"Ordinamento: Numerico corretto\n\n")
+            f.write("MISSION DATA MERGE - CSV VERSION\n")
+            f.write("=" * 50 + "\n\n")
+            f.write(f"Merge date: {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}\n")
+            f.write(f"Files processed: {len(file_paths)}\n")
+            f.write(f"Files loaded: {len(all_dataframes)}\n")
+            f.write(f"Total rows: {len(merged_df):,}\n")
+            f.write(f"Total columns: {len(merged_df.columns)}\n")
+            f.write(f"Output file: {output_file}\n\n")
             
-            f.write("FILE GENERATI:\n")
-            f.write(f"- Dataset completo: {output_file}\n")
-            f.write(f"- Campione: {sample_file}\n")
-            f.write(f"- Metadati: {metadata_file}\n\n")
-            
-            f.write("COLONNE NEL DATASET:\n")
-            for i, col in enumerate(merged_df.columns, 1):
-                valid_count = merged_df[col].notna().sum()
-                percentage = (valid_count / len(merged_df)) * 100
-                f.write(f"{i:2d}. {col:<25} : {valid_count:>8,} valori ({percentage:5.1f}%)\n")
-            
-            f.write("\nFILE SORGENTE PROCESSATI:\n")
-            for i, file_path in enumerate(file_paths[:successful_files], 1):
+            f.write("SOURCE FILES:\n")
+            f.write("-" * 30 + "\n")
+            for i, file_path in enumerate(file_paths, 1):
                 file_num = extract_file_number(file_path)
-                f.write(f"{i:3d}. {os.path.basename(file_path):<30} (#{file_num})\n")
+                f.write(f"{i:3d}. {os.path.basename(file_path):<25} (#{file_num:3d})\n")
+            
+            if loading_errors:
+                f.write(f"\nLOADING ERRORS:\n")
+                f.write("-" * 20 + "\n")
+                for file_path, error in loading_errors:
+                    f.write(f"❌ {os.path.basename(file_path)}: {error}\n")
+            
+            f.write(f"\nCOLUMNS ({len(merged_df.columns)}):\n")
+            f.write("-" * 20 + "\n")
+            for i, col in enumerate(merged_df.columns, 1):
+                f.write(f"{i:2d}. {col}\n")
         
-        print(f"✅ Metadati: {metadata_file}")
+        print(f"✅ Metadata saved: {metadata_file}")
         
     except Exception as e:
-        print(f"⚠️ Warning metadati: {e}")
+        print(f"⚠️ Warning metadata: {e}")
     
-    # RIEPILOGO FINALE
-    print(f"\n🎯 MERGE MISSION DATA COMPLETATO!")
+    # FINAL SUMMARY
+    print(f"\n🎯 MERGE COMPLETED!")
     print("=" * 60)
-    print(f"📂 File uniti: {successful_files}")
-    print(f"📊 Dataset finale: {len(merged_df):,} righe × {len(merged_df.columns)} colonne")
-    print(f"💾 Dataset completo: {output_file} ({file_size:.1f} MB)")
-    print(f"👁️ Anteprima: {sample_file} ({sample_size_kb:.1f} KB)")
-    print(f"📝 Metadati: {metadata_file}")
-    
-    print(f"\n💡 PROSSIMI PASSI:")
-    print(f"1. 👁️ Apri {sample_file} per vedere il risultato")
-    print(f"2. 🏷️ Applica script rinomina variabili se necessario")
-    print(f"3. 🔄 Applica conversioni unità se necessario")
-    print(f"4. 📊 Usa {output_file} per analisi complete")
-    
-    print(f"\n🚀 MISSIONE UNITA CON SUCCESSO!")
-    
-    return merged_df
+    print(f"📊 Data merged: {len(merged_df):,} rows × {len(merged_df.columns)} columns")
+    print(f"📁 Files processed: {len(all_dataframes)}/{len(file_paths)}")
+    print(f"📄 Output files:")
+    print(f"  • Main dataset: {output_file}")
+    print(f"  • Metadata: {metadata_file}")
+    print(f"\n💡 NEXT STEPS:")
+    print(f"1. 📊 Check the merged dataset: {output_file}")
+    print(f"2. � Run script 3 for unit conversions")
+    print(f"3. 🏷️ Run script 4 for variable renaming")
 
 if __name__ == "__main__":
-    merged_dataset = merge_csv_files()
-    if merged_dataset is not None:
-        print("\n🎉 MERGE COMPLETATO CON SUCCESSO!")
-    else:
-        print("\n💥 MERGE FALLITO - controllare errori sopra")
+    merge_csv_files()

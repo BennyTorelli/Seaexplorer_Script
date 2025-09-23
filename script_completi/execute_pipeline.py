@@ -1,33 +1,33 @@
 #!/usr/bin/env python3
 """
-ESECUTORE PIPELINE SEQUENZIALE SEAEXPLORER
-===========================================
+SEAEXPLORER SEQUENTIAL PIPELINE EXECUTOR
+=========================================
 
-Questo script esegue la pipeline completa di elaborazione dati SeaExplorer 
-nell'ordine sequenziale corretto con priorità file appropriata.
+This script executes the complete SeaExplorer data processing pipeline 
+in the correct sequential order with appropriate file priority.
 
-PANORAMICA PIPELINE:
-- File Raw → CSV Separati → CSV Unito → CSV Unità Convertite → CSV Variabili Rinominate
-- Ogni script seleziona automaticamente l'output del passo precedente
-- Priorità file assicura elaborazione sequenziale appropriata
+PIPELINE OVERVIEW:
+- Raw Files → Separate CSV → Merged CSV → Unit Converted CSV → Renamed Variables CSV
+- Each script automatically selects the output from the previous step
+- File priority ensures appropriate sequential processing
 
-STATO ATTUALE (dall'analisi pipeline):
-✅ Passo 1: convert_raw_to_separate_csv.py - COMPLETATO (183 file in csv_separati/)
-✅ Passo 2: merge_mission_data_csv.py - COMPLETATO (mission_complete_merged_*.csv esiste)
-✅ Passo 3: convert_all_units_csv.py - COMPLETATO (file units_converted esistono)
-✅ Passo 4: rename_variables_csv.py - COMPLETATO (file renamed esistono)
+CURRENT STATUS (from pipeline analysis):
+✅ Step 1: convert_raw_to_separate_csv.py - COMPLETED (183 files in csv_separati/)
+✅ Step 2: merge_mission_data_csv.py - COMPLETED (mission_complete_merged_*.csv exists)
+✅ Step 3: convert_all_units_csv.py - COMPLETED (units_converted files exist)
+✅ Step 4: rename_variables_csv.py - COMPLETED (renamed files exist)
 
-La pipeline è attualmente completa! Ogni script ha priorità file appropriata:
+The pipeline is currently complete! Each script has appropriate file priority:
 
-1. convert_all_units_csv.py dà priorità ai file "merged" e "complete"
-2. rename_variables_csv.py dà priorità ai file "units_converted"
-3. Entrambi gli script escludono file già elaborati per prevenire duplicazione
+1. convert_all_units_csv.py prioritizes "merged" and "complete" files
+2. rename_variables_csv.py prioritizes "units_converted" files
+3. Both scripts exclude already processed files to prevent duplication
 
-MODIFICHE EFFETTUATE:
-- Corrette funzioni extract_number() per ordinamento file appropriato
-- Rimossa conversione decimal_to_dms() (mantenendo coordinate decimali)
-- Aggiunta logica priorità file in tutti gli script
-- Aggiunti pattern esclusione per file elaborati
+CHANGES MADE:
+- Fixed extract_number() functions for appropriate file ordering
+- Removed decimal_to_dms() conversion (keeping decimal coordinates)
+- Added file priority logic in all scripts
+- Added exclusion patterns for processed files
 """
 
 import subprocess
@@ -36,113 +36,113 @@ import os
 from datetime import datetime
 
 def run_script(script_name, description):
-    """Esegue uno script con gestione errori"""
+    """Execute a script with error handling"""
     print(f"\n{'='*60}")
-    print(f"🔄 ESECUZIONE: {script_name}")
+    print(f"🔄 EXECUTING: {script_name}")
     print(f"📝 {description}")
     print(f"{'='*60}")
     
     try:
-        # Usa l'ambiente Python configurato
+        # Use the configured Python environment
         python_cmd = "/Users/benedettatorelli/Desktop/Datos_brutos_1/.venv/bin/python"
         result = subprocess.run([python_cmd, script_name], 
                               capture_output=True, text=True, timeout=300)
         
         if result.returncode == 0:
-            print(f"✅ SUCCESSO: {script_name} completato")
+            print(f"✅ SUCCESS: {script_name} completed")
             if result.stdout:
                 print("📊 Output:")
                 print(result.stdout)
         else:
-            print(f"❌ ERRORE: {script_name} fallito")
+            print(f"❌ ERROR: {script_name} failed")
             if result.stderr:
-                print("🚨 Dettagli errore:")
+                print("🚨 Error details:")
                 print(result.stderr)
             return False
             
     except subprocess.TimeoutExpired:
-        print(f"⏰ TIMEOUT: {script_name} ha impiegato più di 5 minuti")
+        print(f"⏰ TIMEOUT: {script_name} took more than 5 minutes")
         return False
     except Exception as e:
-        print(f"💥 ECCEZIONE: {str(e)}")
+        print(f"💥 EXCEPTION: {str(e)}")
         return False
     
     return True
 
 def main():
-    """Esegue la pipeline completa"""
+    """Execute the complete pipeline"""
     
-    print("🌊 PIPELINE ELABORAZIONE DATI SEAEXPLORER")
+    print("🌊 SEAEXPLORER DATA PROCESSING PIPELINE")
     print("=" * 80)
-    print(f"Iniziato alle: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    print(f"Started at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     
-    # Cambia alla directory logs dove si trovano gli script
+    # Change to the logs directory where the scripts are located
     script_dir = "pld/logs"
     if os.path.exists(script_dir):
         os.chdir(script_dir)
-        print(f"📁 Directory di lavoro: {os.getcwd()}")
+        print(f"📁 Working directory: {os.getcwd()}")
     else:
-        print(f"❌ Directory script {script_dir} non trovata!")
+        print(f"❌ Script directory {script_dir} not found!")
         return False
     
-    # Passi pipeline con descrizioni
+    # Pipeline steps with descriptions
     pipeline_steps = [
         ("convert_raw_to_separate_csv.py", 
-         "Converte file raw .pld1.raw in file individuali mission_XXX.csv"),
+         "Converts raw .pld1.raw files to individual mission_XXX.csv files"),
         
         ("merge_mission_data_csv.py", 
-         "Unisce tutti i file CSV separati in un singolo dataset ordinato"),
+         "Merges all separate CSV files into a single ordered dataset"),
         
         ("convert_all_units_csv.py", 
-         "Converte unità di misura (torbidità, clorofilla, conduttività, ossigeno)"),
+         "Converts measurement units (turbidity, chlorophyll, conductivity, oxygen)"),
         
         ("rename_variables_csv.py", 
-         "Rinomina variabili con nomenclatura oceanografica standard")
+         "Renames variables with standard oceanographic nomenclature")
     ]
     
-    print(f"\n🎯 PIANO ESECUZIONE PIPELINE:")
+    print(f"\n🎯 PIPELINE EXECUTION PLAN:")
     for i, (script, desc) in enumerate(pipeline_steps, 1):
         print(f"   {i}. {script}")
         print(f"      → {desc}")
     
-    # Chiedi conferma
-    print(f"\n⚠️  Questo eseguirà la pipeline completa sequenzialmente.")
-    print(f"💡 Ogni script selezionerà automaticamente il file input appropriato.")
-    response = input(f"\n🤔 Vuoi procedere? (s/N): ").strip().lower()
+    # Ask for confirmation
+    print(f"\n⚠️  This will execute the complete pipeline sequentially.")
+    print(f"💡 Each script will automatically select the appropriate input file.")
+    response = input(f"\n🤔 Do you want to proceed? (y/N): ").strip().lower()
     
-    if response != 's':
-        print("❌ Esecuzione pipeline annullata.")
+    if response != 'y':
+        print("❌ Pipeline execution cancelled.")
         return False
     
-    # Esegui pipeline
+    # Execute pipeline
     success_count = 0
     for i, (script, description) in enumerate(pipeline_steps, 1):
-        print(f"\n\n🎯 PASSO {i}/{len(pipeline_steps)}")
+        print(f"\n\n🎯 STEP {i}/{len(pipeline_steps)}")
         
         if not os.path.exists(script):
-            print(f"❌ Script {script} non trovato!")
+            print(f"❌ Script {script} not found!")
             continue
             
         if run_script(script, description):
             success_count += 1
-            print(f"✅ Passo {i} completato con successo")
+            print(f"✅ Step {i} completed successfully")
         else:
-            print(f"❌ Passo {i} fallito")
-            print(f"🛑 Interruzione esecuzione pipeline")
+            print(f"❌ Step {i} failed")
+            print(f"🛑 Stopping pipeline execution")
             break
     
-    # Riassunto
+    # Summary
     print(f"\n" + "="*80)
-    print(f"📊 RIASSUNTO ESECUZIONE PIPELINE")
+    print(f"📊 PIPELINE EXECUTION SUMMARY")
     print(f"="*80)
-    print(f"✅ Passi riusciti: {success_count}/{len(pipeline_steps)}")
-    print(f"⏰ Completato alle: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    print(f"✅ Successful steps: {success_count}/{len(pipeline_steps)}")
+    print(f"⏰ Completed at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     
     if success_count == len(pipeline_steps):
-        print(f"🎉 PIPELINE COMPLETATA CON SUCCESSO!")
-        print(f"💡 I tuoi dati SeaExplorer sono stati completamente elaborati.")
+        print(f"🎉 PIPELINE COMPLETED SUCCESSFULLY!")
+        print(f"💡 Your SeaExplorer data has been fully processed.")
     else:
-        print(f"⚠️  Pipeline incompleta. Controlla i messaggi di errore sopra.")
+        print(f"⚠️  Incomplete pipeline. Check error messages above.")
     
     return success_count == len(pipeline_steps)
 

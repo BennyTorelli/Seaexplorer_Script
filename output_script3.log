@@ -1,0 +1,4 @@
+Traceback (most recent call last):
+  File "/Users/benedettatorelli/Desktop/Datos_brutos_1/script_completi/3_convert_all_units_csv.py", line 10, in <module>
+    import gsw
+ModuleNotFoundError: No module named 'gsw'
