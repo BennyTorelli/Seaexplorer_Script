@@ -68,7 +68,7 @@ def convert_raw_to_separate_csv():
     print("=" * 60)
     
     # Pattern to find glider raw files
-    raw_pattern = "pld/logs/*.pld1.raw.*"
+    raw_pattern = "../input/pld/logs/*.pld1.raw.*"
     
     # Find all .pld1.raw.* files
     print(f"\n🔍 SEARCHING RAW FILES...")
@@ -99,7 +99,7 @@ def convert_raw_to_separate_csv():
     print(f"   Missing files: {set(range(1, 184)) - set(file_numbers)}")
     
     # Create directory for separate CSVs if it doesn't exist
-    output_dir = "csv_separati"
+    output_dir = "../output/csv_separati"
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
         print(f"📁 Created directory: {output_dir}")
@@ -166,7 +166,7 @@ def convert_raw_to_separate_csv():
     
     # Save conversion metadata
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    metadata_file = f"csv_separati_metadata_{timestamp}.txt"
+    metadata_file = f"../output/csv_separati_metadata_{timestamp}.txt"
     
     try:
         with open(metadata_file, 'w', encoding='utf-8') as f:
