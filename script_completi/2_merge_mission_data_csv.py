@@ -83,13 +83,11 @@ def merge_csv_files():
     
     # Patterns to find mission CSV files
     patterns = [
-        "csv_separati/mission_*.csv",  # Separate mission files (PRIORITY)
-        "csv_separati/*.csv",          # All CSVs in separate folder
-        "mission_*.csv",               # Specific mission files
-        "*.csv",                       # All CSVs in current directory
-        "sea074*.csv",                 # Specific SeaExplorer files
-        "netcdf_output/*.csv",         # CSVs in output folder
-        "pld/logs/*.csv"               # CSVs in pld/logs folder
+        "../output/csv_separati/mission_*.csv",  # Separate mission files (PRIORITY)
+        "../output/mission_*.csv",               # Specific mission files  
+        "../output/sea074*.csv",                 # Specific SeaExplorer files
+        "../output/netcdf_output/*.csv",         # CSVs in output folder
+        "../input/pld/logs/*.csv"               # CSVs in pld/logs folder
     ]
     
     print(f"\n🔍 SEARCHING CSV FILES...")
@@ -261,7 +259,7 @@ def merge_csv_files():
     try:
         # Create output filename with script name and timestamp
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        output_file = f"script2_mission_complete_merged_{timestamp}.csv"
+        output_file = f"../output/script2_mission_complete_merged_{timestamp}.csv"
         
         # Save to CSV
         merged_df.to_csv(output_file, index=False, encoding='utf-8')
@@ -280,7 +278,7 @@ def merge_csv_files():
     print(f"\n📝 SAVING METADATA...")
 
     try:
-        metadata_file = f"script2_mission_merge_metadata_{timestamp}.txt"
+        metadata_file = f"../output/script2_mission_merge_metadata_{timestamp}.txt"
         
         with open(metadata_file, 'w', encoding='utf-8') as f:
             f.write("MISSION DATA MERGE - CSV VERSION\n")
