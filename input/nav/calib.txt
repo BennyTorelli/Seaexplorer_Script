@@ -1,1 +1,0 @@
-Compass calibration : 18/10/2019 13:11:48, VERSION v2.0.1-r (Mar  9 2018), Score(0.000, 0.000, 0.000)
