@@ -1,0 +1,19 @@
+{
+    // VS Code debug configuration for the Seaexplorer script
+    // Launches `script_completi/1_convert_raw_to_separate_csv.py` using the workspace `.venv` interpreter
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python: Debug 1_convert_raw_to_separate_csv.py",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/script_completi/1_convert_raw_to_separate_csv.py",
+            "console": "integratedTerminal",
+            "env": {"PYTHONUNBUFFERED": "1"},
+            "cwd": "${workspaceFolder}",
+            "args": [],
+            "justMyCode": true,
+            "python": "${workspaceFolder}/.venv/bin/python"
+        }
+    ]
+}
